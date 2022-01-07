@@ -1,9 +1,13 @@
-from platform import platform
+from datetime import datetime
 from mainwindow import Ui_MainWindow
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 import vlc
 import platform
 import sys
+import time
+import psutil
+import subprocess
+import os
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -25,11 +29,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.main_frame.setAutoFillBackground(True)
 
         self.open_stream_button.clicked.connect(self.play)
+        self.recording = False
+        self.pid = None
+        self.process = psutil.Process(self.pid)
+        self.rtsp_format = "rtsp://admin:hk123456@{}:554/Streaming/Channels/101"
+        self.recording_button.clicked.connect(self.record)
+
+        self.timer = QtCore.QTimer(self)
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.update_ui)
+        self.open_directory_button.clicked.connect(self.open_directory)
+
+        self.cam_addr_edit.setText("192.168.104.72")
+
 
     def play(self):
-        cam_addr = "rtsp://admin:hk123456@{}:554/Streaming/Channels/101".format(
-            self.cam_addr_edit.text().strip()
-        )
+        cam_addr = self.rtsp_format.format(self.cam_addr_edit.text().strip())
         # 192.168.104.72
         self.media = self.instance.media_new(cam_addr)
         self.media.parse()
@@ -45,6 +60,43 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif platform.system() == "Darwin":  # for MacOS
             self.mediaplayer.set_nsobject(int(self.main_frame.winId()))
         self.mediaplayer.play()
+
+    def record(self):
+        if not self.recording:
+            self.pid = subprocess.Popen(
+                "ffmpeg -i {} "
+                " -c copy -map 0 -segment_time 00:01:00 -f "
+                " segment -strftime 1 -reset_timestamps 1 temp/TEST_%Y%m%d_%H%M%S.mp4".format(
+                    self.rtsp_format.format("192.168.104.72")
+                ),
+                stdout=None,
+            ).pid
+            self.process = psutil.Process(self.pid)
+            self.recording = True
+            self.recording_button.text = "停止录像"
+        else:
+            if self.process.is_running():
+                self.process.kill()
+
+    def update_ui(self):
+        if self.process.is_running():
+            self.recording = True
+            self.recording_button.text = "停止录像"
+        else:
+            self.recording = False
+            self.recording_button.text = "录像"
+
+    def open_directory(self):
+        path = os.path.join(os.getcwd(), "record")
+        os.makedirs(path, exist_ok=True)
+        os.startfile(path)
+
+    def closeEvent(self, event):
+        #Your desired functionality here
+        print('Closing')
+        if self.process.is_running():
+                self.process.kill()
+        event.accept()
 
 
 def main():
