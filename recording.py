@@ -1,4 +1,5 @@
 from datetime import datetime
+import shutil
 from mainwindow import Ui_MainWindow
 from PyQt5 import QtWidgets, QtGui, QtCore
 import vlc
@@ -62,6 +63,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mediaplayer.play()
 
     def record(self):
+        path = os.path.join(os.getcwd(), "temp")
+        os.makedirs(path, exist_ok=True)
         if not self.recording:
             self.pid = subprocess.Popen(
                 "ffmpeg -i {} "
@@ -95,7 +98,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #Your desired functionality here
         print('Closing')
         if self.process.is_running():
-                self.process.kill()
+            self.process.kill()
+        while self.process.is_running():
+            time.sleep(.1)
+        shutil.rmtree('temp')
         event.accept()
 
 
