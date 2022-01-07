@@ -1,4 +1,3 @@
-from datetime import datetime
 import shutil
 from mainwindow import Ui_MainWindow
 from PyQt5 import QtWidgets, QtGui, QtCore
