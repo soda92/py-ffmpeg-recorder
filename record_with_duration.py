@@ -11,7 +11,7 @@ if __name__ == "__main__":
     x = subprocess.Popen(
         "ffmpeg -i {} "
         " -c copy -map 0 -segment_time 00:01:00 -f "
-        " segment -strftime 1 temp/TEST_%Y%m%d_%H%M%S.mp4".format(
+        " segment -strftime 1 -reset_timestamps 1 temp/TEST_%Y%m%d_%H%M%S.mp4".format(
             rtsp_format.format("192.168.104.72")
         ),
         stdout=None,

@@ -1,6 +1,9 @@
 # temp
 temp
 
+# generate pyqt5 window
+*window.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
